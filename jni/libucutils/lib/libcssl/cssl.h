@@ -118,5 +118,6 @@ int cssl_getdata(cssl_t *serial,
 		 uint8_t *buffer,  /* buffer for data */
 		 int size);        /* buffer size */
 
+void cssl_reset(cssl_t *serial);
 
 #endif /* __CSSL_H__ */
