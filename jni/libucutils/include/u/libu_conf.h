@@ -265,4 +265,10 @@
 #undef NO_SCTP
 #define NO_SCTP 1
 
+#define HAVE_LIBSERIALPORT 1
+#define HAVE_LIBHAL 1
+#define HAVE_LIBMYUTILS 1 
+#define HAVE_LIBCSSL 1 
+
+
 #endif /* !_LIBU_CONF_H_ */

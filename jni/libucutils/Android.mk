@@ -77,6 +77,10 @@ ifdef HAVE_LIBSERIALPORT
     LOCAL_SRC_FILES += lib/libserialport/serialport.c
 endif
 
+ifdef HAVE_LIBCSSL
+    LOCAL_SRC_FILES += lib/libcssl/cssl.c
+endif
+
 ifdef HAVE_LIBHAL
     LOCAL_SRC_FILES += lib/libhal/hardware.c
 endif
@@ -134,7 +138,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/include/u \
 
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_EXPORT_LDLIBS := -llog -landroid
-LOCAL_LDLIBS := -llog 
+LOCAL_LDLIBS := -llog -ldl
 
 #hard-fp setting
 ifneq ($(filter %armeabi-v7a,$(TARGET_ARCH_ABI)),)
