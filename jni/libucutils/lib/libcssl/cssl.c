@@ -446,7 +446,7 @@ void cssl_settimeout(cssl_t *serial, int timeout)
     }    
 
     serial->tio.c_cc[VTIME]=timeout;
-    
+    serial->tio.c_cc[VMIN]= timeout>0?0:1;
     tcsetattr(serial->fd,TCSANOW,&(serial->tio));
 
     cssl_error=CSSL_OK;
