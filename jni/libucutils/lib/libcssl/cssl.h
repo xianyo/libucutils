@@ -109,6 +109,8 @@ void cssl_drain(cssl_t *serial);
 
 /* Sets port timeout (deciseconds) in blocking mode */
 void cssl_settimeout(cssl_t *serial, int timeout);
+int cssl_getchar_timeout(cssl_t *serial, int timeout);
+int cssl_getdata_timeout(cssl_t *serial,uint8_t *buf,int length, int msTimeouts);
 
 /* reads a char in blocking mode */
 int cssl_getchar(cssl_t *serial);
@@ -119,5 +121,13 @@ int cssl_getdata(cssl_t *serial,
 		 int size);        /* buffer size */
 
 void cssl_reset(cssl_t *serial);
+
+
+void cssl_swapserial(char *dev1, char *dev2,
+          int baud,
+          int bits,
+          int parity,
+          int stop);
+void cssl_stopswap();
 
 #endif /* __CSSL_H__ */

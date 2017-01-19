@@ -24,7 +24,7 @@
 __BEGIN_DECLS
 
 time_t getLibUBuildUTC();
-
+int hexdump(char type, char *in, int len, char *out, int limit);
 __END_DECLS
 
 #endif  /* ANDROID_INCLUDE_MYUTILS_H */

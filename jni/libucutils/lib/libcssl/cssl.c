@@ -432,7 +432,7 @@ void cssl_setflowcontrol(cssl_t *serial,
 
 
 /* Blocking mode: sets the timeout in 
-   hundreds of miliseconds */
+   miliseconds */
 void cssl_settimeout(cssl_t *serial, int timeout)
 {
     if (!cssl_started) {
@@ -444,7 +444,7 @@ void cssl_settimeout(cssl_t *serial, int timeout)
 	cssl_error=CSSL_ERROR_NULLPOINTER;
 	return;
     }    
-
+    timeout = (timeout+99)/100; //hundreds of miliseconds
     serial->tio.c_cc[VTIME]=timeout;
     serial->tio.c_cc[VMIN]= timeout>0?0:1;
     tcsetattr(serial->fd,TCSANOW,&(serial->tio));
@@ -537,7 +537,7 @@ void cssl_drain(cssl_t *serial)
 	return;
     }    
 
-    //tcdrain(serial->fd); //ndk error
+    tcdrain(serial->fd); //ndk error
 }
 
 /* blocking mode: reading a char */
@@ -560,6 +560,94 @@ int cssl_getdata(cssl_t *serial,
 {
     return read(serial->fd,buffer,size);
 }
+
+
+/* blocking mode: reading a char */
+int cssl_getchar_timeout(cssl_t *serial, int timeout)
+{
+    int result;
+    uint8_t c;
+	
+    cssl_settimeout(serial,timeout);
+    result=read(serial->fd,&c,sizeof(c));
+    if (result<=0)
+	return -1;
+    
+    return c;
+}
+
+/* blocking mode: reading a data buffer */
+int cssl_getdata_timeout(cssl_t *serial,
+		 uint8_t *buf,
+		 int length, int msTimeouts)
+{
+    struct timeval timeout;
+	fd_set rset;	  
+	int ret = 1;
+	int RDataLen = 0;
+	unsigned char *p = buf;
+	int TimeElapse;
+	int TotalLen=length;
+	struct timespec ts_begin, ts_end;
+	int RawTimeOutMs=msTimeouts;
+
+	serial->tio.c_cc[VTIME]=0;
+    serial->tio.c_cc[VMIN]= 0;
+    tcsetattr(serial->fd,TCSANOW,&(serial->tio));
+	
+	 clock_gettime(CLOCK_MONOTONIC,&ts_begin);
+	 
+	 while(1)
+	 {
+		   clock_gettime(CLOCK_MONOTONIC,&ts_end);
+		   
+		   TimeElapse = (ts_end.tv_sec - ts_begin.tv_sec)*1000 + (ts_end.tv_nsec-ts_begin.tv_nsec)/1000000;
+		   if(TimeElapse > RawTimeOutMs)
+		   {
+					return RDataLen;
+		   }
+		   msTimeouts = RawTimeOutMs - TimeElapse;
+		   if( TotalLen == RDataLen)
+		   {		
+					return RDataLen;
+		   }
+
+					
+		   FD_ZERO(&rset);
+		   FD_SET(serial->fd,&rset);
+		   if(msTimeouts == -1) {
+					ret = select(serial->fd+1,&rset,NULL,NULL,NULL);
+		   } else {   
+
+					timeout.tv_sec = (long)(msTimeouts/1000);
+					timeout.tv_usec = (long)((msTimeouts%1000)*1000);
+					ret = select(serial->fd+1,&rset,NULL,NULL,&timeout);
+		   }
+
+		   if(ret < 0) {
+
+					return ret;
+		   }
+		   if(!FD_ISSET(serial->fd,&rset)) {
+
+				return RDataLen;
+		   }
+
+		 ret = read(serial->fd,p,length);
+
+		 if(ret < 0) {
+			 return ret;
+		 }
+
+	   	length -=ret;
+	   	p += ret;
+	   	RDataLen += ret;
+	 
+	 }	 
+
+	return RDataLen;
+}
+
 
 /*------------------------------------------*/
 
@@ -592,3 +680,33 @@ void cssl_handler(int signo, siginfo_t *info, void *ignored)
 }
 
 
+cssl_t *swapdev1 = NULL;
+cssl_t *swapdev2 = NULL;
+
+static void swapcallback(int id,  
+                uint8_t *buffer, 
+                int len)
+{
+    if(id==1){
+        cssl_putdata(swapdev2,buffer,len);
+    }else if(id==2){
+        cssl_putdata(swapdev1,buffer,len);
+    }
+}
+
+void cssl_swapserial(char *dev1, char *dev2,
+          int baud,
+          int bits,
+          int parity,
+          int stop)
+{
+    cssl_stop();
+    cssl_start();
+    swapdev1 = cssl_open(dev1,swapcallback,1,baud,bits,parity,stop);
+    swapdev2 = cssl_open(dev2,swapcallback,2,baud,bits,parity,stop);
+}
+
+void cssl_stopswap()
+{
+    cssl_stop();
+}

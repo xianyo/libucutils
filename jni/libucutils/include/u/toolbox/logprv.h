@@ -32,7 +32,7 @@ enum {
 #endif
 
 #ifndef LOG_TAG_PRE
-#define LOG_TAG_PRE ""
+#define LOG_TAG_PRE "pax-"
 #endif
 
 #ifndef PRINTF_LOG
@@ -75,10 +75,11 @@ enum {
 #define ALOGW(...)    u_log_write(LOG_LOCAL0,LOG_WARNING,0,0,__VA_ARGS__)
 #define ALOGE(...)    u_log_write(LOG_LOCAL0,LOG_ERR,0,0,__VA_ARGS__)
 
+
 #define u_console_write(err, ...) \
     u_console_write_ex_android(LOG_TAG_PRE, LOG_TAG, LOG_NDEBUG, PRINTF_LOG ,err, __FILE__, __LINE__, __FUNCTION__,  __VA_ARGS__)
 
-#define printf(...)  u_console_write(0,__VA_ARGS__)
+#define u_printf(...)  u_console_write(0,__VA_ARGS__)
 
 #else
 #define u_log_write(fac, lev, flags, err, ...)                               \
